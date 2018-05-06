@@ -1,4 +1,4 @@
-subscription_id = "<subcription_id"
+subscription_id = "<subcription_id>"
 client_id = "<client_id>"
 client_secret = "<client_Secret>"
 tenant_id = "<tenant_id>"
