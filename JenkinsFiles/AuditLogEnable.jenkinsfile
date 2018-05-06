@@ -1,0 +1,37 @@
+properties([parameters([
+	choice(choices: 'demo\niots\nedge\nadvs\ndevs\ncore\nconn\nexns', description: 'max 4 Characters', name: 'account_name_prefix'),
+	password(defaultValue: 'ClientId', description: 'ClientID', name: 'ClientID'),
+	password(defaultValue: 'ClientSecret', description: 'ClientSecret', name: 'ClientSecret'),
+	choice(choices: '066\n142\n143\n144\n145\n146\n147\n148\n168', description: 'your subscription last three digit', name: 'Subscription_id'),
+])])
+
+node('master'){
+  stage('Login')
+   {
+    sh '''
+      set +xv
+      az login --service-principal -u $ClientID -p $ClientSecret --tenant a6aefcb5-d166-4bbc-be10-bf4cdbdb39d4
+      az account set -s msa-000$Subscription_id > /dev/null 2>&1
+      '''
+    }
+
+   stage ('Create LogProfile') {
+       sh '''
+       set +xv
+       resoureGrp="mdsp-$account_name_prefix-logs"
+       StorageAcc="mdsp$account_name_prefix"logs
+       logProfile="$account_name_prefix-Logprofile"
+       lockName="$account_name_prefix-DeleteLock"
+       touch subid.txt
+       
+       az account show > subid.txt
+       subID=`cat subid.txt | grep "id" | sed -e 's#"id":##g' | sed 's#"##g' | sed 's#,##g' | xargs`
+       az group create --name $resoureGrp --location "West Europe"
+       az storage account create -n $StorageAcc -g $resoureGrp -l westeurope --sku Standard_LRS
+       az monitor log-profiles create -n $logProfile --days 1059 --categories Write Delete Action --enabled true -l westeurope --locations australiaeast australiasoutheast brazilsouth canadacentral canadaeast centralindia centraluseastasia global --storage-account-id /subscriptions/${subID}/resourceGroups/${resoureGrp}/providers/Microsoft.Storage/storageAccounts/${StorageAcc}
+       #az lock create --name $lockName --resource-group $resoureGrp --lock-type CanNotDelete
+       echo "Resource Group Name : $resoureGrp || Storage Account Name : $StorageAcc || Log Profile Name :  $logProfile || Lock Name :  $lockName"
+       echo "Lock is not working if we login through Service principal, please create lock on Storage account through Azure Portal"
+    '''
+    }
+}
