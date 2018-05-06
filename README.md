@@ -3,11 +3,17 @@ download Terraform
 https://www.terraform.io/downloads.html
 
 Terraform installation on CentOs:
+
 SSH into your cloud server
+
 sudo yum install -y zip unzip (if these are not installed)
+
 wget https://releases.hashicorp.com/terraform/0.9.8/terraform_0.11.7_linux_amd64.zip
+
 unzip terraform_0.11.7_linux_amd64.zip
+
 sudo mv terraform /usr/local/bin/
+
 Confirm terraform binary is accessible: terraform --version
 
 Run following Command:
