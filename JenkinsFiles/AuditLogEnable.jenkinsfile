@@ -1,8 +1,8 @@
 properties([parameters([
-	choice(choices: 'demo\niots\nedge\nadvs\ndevs\ncore\nconn\nexns', description: 'max 4 Characters', name: 'account_name_prefix'),
+	choice(choices: 'demo\ntest', description: 'max 4 Characters', name: 'account_name_prefix'),
 	password(defaultValue: 'ClientId', description: 'ClientID', name: 'ClientID'),
 	password(defaultValue: 'ClientSecret', description: 'ClientSecret', name: 'ClientSecret'),
-	choice(choices: '066\n142\n143\n144\n145\n146\n147\n148\n168', description: 'your subscription last three digit', name: 'Subscription_id'),
+	choice(choices: '100\n102', description: 'your subscription last three digit', name: 'Subscription_id'),
 ])])
 
 node('master'){
@@ -10,7 +10,7 @@ node('master'){
    {
     sh '''
       set +xv
-      az login --service-principal -u $ClientID -p $ClientSecret --tenant a6aefcb5-d166-4bbc-be10-bf4cdbdb39d4
+      az login --service-principal -u $ClientID -p $ClientSecret --tenant xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx
       az account set -s msa-000$Subscription_id > /dev/null 2>&1
       '''
     }
