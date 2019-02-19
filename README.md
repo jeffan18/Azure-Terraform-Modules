@@ -1,5 +1,5 @@
 # Terraform
-download Terraform
+Download Terraform
 https://www.terraform.io/downloads.html
 
 Terraform installation on CentOs:
@@ -28,3 +28,5 @@ Run following Command:
 
 VM creation:
 https://docs.microsoft.com/en-us/azure/virtual-machines/linux/terraform-create-complete-vm
+
+Terraform Azure Document: https://www.terraform.io/docs/providers/azurerm/
