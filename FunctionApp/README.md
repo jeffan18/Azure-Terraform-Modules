@@ -1,5 +1,5 @@
 module "functionapp" {
-	source = "git::ssh://git@code.siemens.com/mindsphere-azure/infrastructure_az/terraform_modules/function-app.git"
+	source = "git::ssh://GitURL"
 	
 	// Parameters
 	function_app_plan_name  = "${var.function_plan_name}"
