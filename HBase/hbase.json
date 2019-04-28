@@ -1,0 +1,242 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "headnodeInstanceCount": {
+          "type": "string",
+          "defaultValue": 2,
+          "metadata": {
+            "description": "The number of head instance."
+          }
+      },
+      "headnodevmSize": {
+          "type": "string",
+          "defaultValue": "Standard_D3_v2",
+          "metadata": {
+            "description": "The size of your head nodes."
+          }
+       },
+       "workernodeInstanceCount": {
+        "type": "string",  
+        "defaultValue": "2",
+        "metadata": {
+          "description": "The number of workernode instance."
+        }
+      },
+    "workernodevmSize": {
+        "type": "string",
+        "defaultValue": "Standard_D3_v2",
+        "metadata": {
+          "description": "The size of your workernode."
+        }
+     },
+     "zookeepernodeInstanceCount": {
+        "type": "string",
+        "defaultValue": "3",
+        "metadata": {
+          "description": "The number of zookeepernode instance."
+        }
+      },
+    "zookeepernodevmSize": {
+        "type": "string",
+        "defaultValue": "Standard_A3",
+        "metadata": {
+          "description": "The size of your zookeepernode."
+        }
+     },
+       "clusterName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name of the HDInsight cluster to create."
+        }
+      },
+      "clusterLoginUserName": {
+        "type": "string",
+        "defaultValue": "admin",
+        "metadata": {
+          "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+        }
+      },
+      "clusterLoginPassword": {
+        "type": "securestring",
+        "metadata": {
+          "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+        }
+      },
+      "sshUserName": {
+        "type": "string",
+        "defaultValue": "sshuser",
+        "metadata": {
+          "description": "These credentials can be used to remotely access the cluster."
+        }
+      },
+      "sshPassword": {
+        "type": "securestring",
+        "metadata": {
+          "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+        }
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "Location for all resources."
+        }
+      },
+      "vnetId": {
+        "type": "string",
+        "metadata": {
+          "description": "vnet ID of your cluster."
+        }
+      },
+      "subnetId": {
+        "type": "string",
+        "metadata": {
+          "description": "subnet id for your cluster."
+        }
+      },
+      "accountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Team Name. e.g. Global Team, Core Services, Asset Management"
+      }
+    },
+      "team": {
+      "type": "string",
+      "metadata": {
+        "description": "service name  or sub group name"
+      }
+    },
+    "environment": {
+      "type": "string",
+      "metadata": {
+        "description": "Environment Name. e.g. prod, dev, qa"
+      }
+    }
+    },
+    "variables": {
+      "defaultStorageAccount": {
+        "name": "[replace(parameters('clusterName'),'-', '')]",
+        "type": "Standard_LRS"
+      },
+      "vNet": {
+        "id": "[parameters('vnetId')]",
+        "subnetid": "[parameters('subnetId')]"
+      },
+      "tags": {
+      "accountName": "[parameters('accountName')]",
+      "team": "[parameters('team')]",
+      "environment": "[parameters('environment')]"
+    }
+
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[variables('defaultStorageAccount').name]",
+        "location": "[parameters('location')]",
+        "tags": "[variables('tags')]",
+        "apiVersion": "2016-01-01",
+        "sku": {
+          "name": "[variables('defaultStorageAccount').type]"
+        },
+        "kind": "Storage",
+        "properties": {}
+      },
+      {
+        "name": "[parameters('clusterName')]",
+        "type": "Microsoft.HDInsight/clusters",
+        "location": "[parameters('location')]",
+        "apiVersion": "2015-03-01-preview",
+        "dependsOn": [
+          "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccount').name)]"
+        ],
+        "tags": "[variables('tags')]",
+        "properties": {
+          "clusterVersion": "3.6",
+          "osType": "Linux",
+          "clusterDefinition": {
+            "kind": "hbase",
+            "configurations": {
+              "gateway": {
+                "restAuthCredential.isEnabled": true,
+                "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+                "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+              }
+            }
+          },
+          "storageProfile": {
+            "storageaccounts": [
+              {
+                "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
+                "isDefault": true,
+                "container": "[parameters('clusterName')]",
+                "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').keys[0].value]"
+              }
+            ]
+          },
+          "computeProfile": {
+            "roles": [
+              {
+                "name": "headnode",
+                "targetInstanceCount": "[parameters('headnodeInstanceCount')]",
+                "hardwareProfile": {
+                  "vmSize": "[parameters('headnodevmSize')]"
+                },
+                "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                    "username": "[parameters('sshUserName')]",
+                    "password": "[parameters('sshPassword')]"
+                  }
+                },
+                "virtualNetworkProfile": {
+                  "id": "[variables('vNet').id]",
+                  "subnet": "[variables('vNet').subnetid]"
+                }
+              },
+              {
+                "name": "workernode",
+                "targetInstanceCount": "[parameters('workernodeInstanceCount')]",
+                "hardwareProfile": {
+                  "vmSize": "[parameters('workernodevmSize')]"
+                },
+                "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                    "username": "[parameters('sshUserName')]",
+                    "password": "[parameters('sshPassword')]"
+                  }
+                },
+                "virtualNetworkProfile": {
+                  "id": "[variables('vNet').id]",
+                  "subnet": "[variables('vNet').subnetid]"
+                }
+              },
+              {
+                "name": "zookeepernode",
+                "targetInstanceCount": "[parameters('zookeepernodeInstanceCount')]",
+                "hardwareProfile": {
+                  "vmSize": "[parameters('zookeepernodevmSize')]"
+                },
+                "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                    "username": "[parameters('sshUserName')]",
+                    "password": "[parameters('sshPassword')]"
+                  }
+                },
+                "virtualNetworkProfile": {
+                  "id": "[variables('vNet').id]",
+                  "subnet": "[variables('vNet').subnetid]"
+                }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "outputs": {
+      "cluster": {
+        "type": "object",
+        "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+      }
+    }
+  }
