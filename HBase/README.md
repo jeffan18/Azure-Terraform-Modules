@@ -1,7 +1,7 @@
 ```
 //Hbase 
 module "hbase" {
-  source = "git::ssh://git@code.siemens.com:mindsphere-azure/infrastructure_az/terraform_modules/hbase.git"
+  source = "git::ssh://git@hbase.git"
   clusterName=""
   clusterLoginUserName=""
   clusterLoginPassword=""
